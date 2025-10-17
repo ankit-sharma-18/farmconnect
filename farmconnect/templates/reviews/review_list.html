@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Reviews - FarmConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            {% if farmer_profile %}
+            <h2 class="fw-bold">
+                <i class="fas fa-star"></i> Reviews for {{ farmer_profile.farm_name }}
+            </h2>
+            <p class="text-muted">
+                Average Rating: 
+                <span class="text-warning fs-5">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= farmer_profile.average_rating %}
+                            <i class="fas fa-star"></i>
+                        {% else %}
+                            <i class="far fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </span>
+                ({{ farmer_profile.average_rating }}/5 - {{ farmer_profile.total_reviews }} reviews)
+            </p>
+            {% else %}
+            <h2 class="fw-bold"><i class="fas fa-star"></i> All Reviews</h2>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        {% if reviews %}
+        {% for review in reviews %}
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="mb-2">
+                                <span class="text-warning fs-5">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= review.rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                {% if review.would_recommend %}
+                                <span class="badge bg-success ms-2">
+                                    <i class="fas fa-thumbs-up"></i> Recommended
+                                </span>
+                                {% endif %}
+                            </div>
+                            <h5 class="card-title">{{ review.title }}</h5>
+                            <p class="card-text">{{ review.comment }}</p>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <small class="text-muted">
+                                        <i class="fas fa-check-circle text-success"></i> Quality: 
+                                        <strong>{{ review.quality_rating }}/5</strong>
+                                    </small>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">
+                                        <i class="fas fa-comments text-primary"></i> Communication: 
+                                        <strong>{{ review.communication_rating }}/5</strong>
+                                    </small>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">
+                                        <i class="fas fa-truck text-info"></i> Delivery: 
+                                        <strong>{{ review.delivery_rating }}/5</strong>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-user"></i> {{ review.buyer.username }} | 
+                            <i class="fas fa-calendar"></i> {{ review.created_at|date:"M d, Y" }}
+                            {% if not farmer_profile %}
+                            | <i class="fas fa-store"></i> 
+                            <a href="{% url 'accounts:farmer_profile' review.farmer.farmer_profile.pk %}">
+                                {{ review.farmer.farmer_profile.farm_name }}
+                            </a>
+                            {% endif %}
+                        </small>
+                        {% if user == review.buyer %}
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{% url 'reviews:edit_review' review.pk %}" class="btn btn-outline-primary">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{% url 'reviews:delete_review' review.pk %}" class="btn btn-outline-danger">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-star fa-3x mb-3"></i>
+                <h4>No Reviews Yet</h4>
+                <p>Be the first to leave a review!</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - FarmConnect{% endblock %}
+{% load currency_tags %}
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+                <small class="text-muted">- {{ user.get_user_type_display }}</small>
+            </h2>
+        </div>
+    </div>
+
+    {% if user.user_type == 'farmer' %}
+    <!-- Farmer Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-seedling"></i> Total Products</h5>
+                    <h2 class="mb-0">{{ total_products }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-shopping-bag"></i> Total Orders</h5>
+                    <h2 class="mb-0">{{ total_orders }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-clock"></i> Pending Orders</h5>
+                    <h2 class="mb-0">{{ pending_orders }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-dollar-sign"></i> Total Revenue</h5>
+                    <h2 class="mb-0">{{ total_revenue|rupees }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Farm Profile</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Farm Name:</strong> {{ profile.farm_name }}</p>
+                    <p><strong>Farm Name:</strong> {{ profile.farm_name }}</p>
+                    <p><strong>Location:</strong> {{ profile.city }}, {{ profile.state }}</p>
+                    <p><strong>Average Rating:</strong> 
+                        {% if profile.average_rating > 0 %}
+                            <span class="text-warning">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= profile.average_rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                            ({{ profile.average_rating }}/5 - {{ profile.total_reviews }} reviews)
+                        {% else %}
+                            <span class="text-muted">No reviews yet</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Delivery Radius:</strong> {{ profile.delivery_radius }} km</p>
+                    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Profile
+                    </a>
+                    <a href="{% url 'products:product_create' %}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Add Product
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Recent Orders</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_orders %}
+                    <div class="list-group list-group-flush">
+                        {% for order in recent_orders %}
+                        <a href="{% url 'orders:order_detail' order.pk %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Order #{{ order.id }}</h6>
+                                    <p class="mb-1 text-muted small">{{ order.product.name }} - {{ order.quantity }} {{ order.product.unit }}</p>
+                                    <small class="text-muted">{{ order.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                <span class="badge bg-{{ order.status|yesno:'success,warning,secondary' }}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">No orders yet</p>
+                    {% endif %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'orders:order_list' %}" class="btn btn-outline-primary">View All Orders</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% elif user.user_type == 'buyer' %}
+    <!-- Buyer Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-shopping-cart"></i> Total Orders</h5>
+                    <h2 class="mb-0">{{ total_orders }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-clock"></i> Pending Orders</h5>
+                    <h2 class="mb-0">{{ pending_orders }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-check-circle"></i> Completed Orders</h5>
+                    <h2 class="mb-0">{{ completed_orders }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-user"></i> Your Profile</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Type:</strong> {{ profile.get_buyer_type_display }}</p>
+                    {% if profile.business_name %}
+                    <p><strong>Business:</strong> {{ profile.business_name }}</p>
+                    {% endif %}
+                    <p><strong>Location:</strong> {{ profile.city }}, {{ profile.state }}</p>
+                    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Profile
+                    </a>
+                    <a href="{% url 'products:product_list' %}" class="btn btn-success">
+                        <i class="fas fa-shopping-basket"></i> Browse Products
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Recent Orders</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_orders %}
+                    <div class="list-group list-group-flush">
+                        {% for order in recent_orders %}
+                        <a href="{% url 'orders:order_detail' order.pk %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ order.product.name }}</h6>
+                                    <p class="mb-1 text-muted small">{{ order.product.farmer.farm_name }}</p>
+                                    <small class="text-muted">{{ order.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                <span class="badge bg-{{ order.status|yesno:'success,warning,secondary' }}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">No orders yet</p>
+                    {% endif %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'orders:order_list' %}" class="btn btn-outline-primary">View All Orders</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

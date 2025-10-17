@@ -1,0 +1,795 @@
+{% extends 'base.html' %}
+
+{% block title %}FarmConnect - Local Food Marketplace{% endblock %}
+{% load currency_tags %}
+{% block extra_css %}
+<style>
+    /* Hero Slider Section */
+    .hero-slider {
+        position: relative;
+        height: 100vh;
+        min-height: 600px;
+        overflow: hidden;
+        margin-top: -1rem;
+    }
+    
+    /* Slider Images */
+    .slider-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 0.6s ease-in-out;
+        z-index: 0;
+    }
+    
+    .slider-image.active {
+        opacity: 1;
+    }
+    
+    /* Hero Overlay - Less transparent for brighter images */
+    .hero-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(40, 167, 69, 0.4) 0%, rgba(0, 0, 0, 0.3) 100%);
+        z-index: 1;
+    }
+    
+    /* Hero Content */
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        padding: 2rem;
+    }
+    
+    .hero-title {
+        font-size: 4rem;
+        font-weight: 800;
+        text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+        animation: fadeInUp 1s ease-out;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        animation: fadeInUp 1.2s ease-out;
+    }
+    
+    .hero-buttons {
+        animation: fadeInUp 1.4s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Slider Navigation Dots */
+    .slider-dots {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 3;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .slider-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        border: 2px solid white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .slider-dot.active {
+        background: white;
+        transform: scale(1.2);
+    }
+    
+    /* Slider Arrows */
+    .slider-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 3;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+    
+    .slider-arrow:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-50%) scale(1.1);
+    }
+    
+    .slider-arrow.prev {
+        left: 20px;
+    }
+    
+    .slider-arrow.next {
+        right: 20px;
+    }
+    
+    /* Stats Section */
+    .stats-section {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        padding: 4rem 0;
+        color: white;
+    }
+    
+    .stat-number {
+        font-size: 3.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    /* Feature Cards */
+    .feature-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        height: 100%;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+    
+    /* Scroll Indicator */
+    .scroll-indicator {
+        position: absolute;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 3;
+        animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateX(-50%) translateY(0);
+        }
+        40% {
+            transform: translateX(-50%) translateY(-10px);
+        }
+        60% {
+            transform: translateX(-50%) translateY(-5px);
+        }
+    }
+    
+    .scroll-indicator i {
+        font-size: 2rem;
+        color: white;
+        opacity: 0.8;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.2rem;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+        }
+        
+        .hero-slider {
+            height: 70vh;
+        }
+        
+        .slider-arrow {
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Slider Section -->
+<div class="hero-slider" id="heroSlider">
+    <!-- Slider Images - Using reliable Unsplash URLs -->
+    <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920" 
+         alt="Farm Field" 
+         class="slider-image active"
+         loading="eager">
+    
+    <img src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1920" 
+         alt="Fresh Vegetables" 
+         class="slider-image"
+         loading="eager">
+    
+    <img src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1920" 
+         alt="Farmer Working" 
+         class="slider-image"
+         loading="eager">
+    
+    <img src="https://images.unsplash.com/photo-1566281796817-93bc94d7dbd2?w=1920" 
+         alt="Fresh Produce Market" 
+         class="slider-image"
+         loading="eager">
+    
+    <img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1920" 
+         alt="Organic Farming" 
+         class="slider-image"
+         loading="eager">
+    
+    <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=1920" 
+         alt="Happy Customer with Produce" 
+         class="slider-image"
+         loading="eager">
+    
+    <!-- Dark Overlay -->
+    <div class="hero-overlay"></div>
+    
+    <!-- Hero Content -->
+    <div class="hero-content">
+        <div class="container text-center">
+            <h1 class="hero-title mb-4">
+                <i class="fas fa-leaf"></i> FarmConnect
+            </h1>
+            <p class="hero-subtitle mb-5">
+                Connecting Local Farmers Directly with Conscious Consumers<br>
+                <strong>Fresh • Local • Sustainable</strong>
+            </p>
+            <div class="hero-buttons d-flex gap-3 justify-content-center flex-wrap">
+                <a href="{% url 'products:product_list' %}" class="btn btn-success btn-lg px-5 py-3 shadow-lg">
+                    <i class="fas fa-shopping-basket"></i> Browse Products
+                </a>
+                {% if not user.is_authenticated %}
+                <a href="{% url 'accounts:register' %}" class="btn btn-outline-light btn-lg px-5 py-3 shadow-lg">
+                    <i class="fas fa-user-plus"></i> Get Started Free
+                </a>
+                {% else %}
+                <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-light btn-lg px-5 py-3 shadow-lg">
+                    <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slider Navigation Arrows -->
+    <button class="slider-arrow prev" id="prevBtn">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <button class="slider-arrow next" id="nextBtn">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+    
+    <!-- Slider Navigation Dots -->
+    <div class="slider-dots" id="sliderDots"></div>
+    
+    <!-- Scroll Down Indicator -->
+    <div class="scroll-indicator">
+        <i class="fas fa-chevron-down"></i>
+    </div>
+</div>
+
+<!-- Animated Statistics Section -->
+<div class="stats-section">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 col-6 mb-4 mb-md-0">
+                <div class="stat-number counter" data-target="500">0</div>
+                <div class="stat-label">
+                    <i class="fas fa-tractor"></i><br>
+                    Active Farmers
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-4 mb-md-0">
+                <div class="stat-number counter" data-target="2500">0</div>
+                <div class="stat-label">
+                    <i class="fas fa-users"></i><br>
+                    Happy Buyers
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-number counter" data-target="15000">0</div>
+                <div class="stat-label">
+                    <i class="fas fa-seedling"></i><br>
+                    Products Listed
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-number counter" data-target="50000">0</div>
+                <div class="stat-label">
+                    <i class="fas fa-shopping-cart"></i><br>
+                    Orders Completed
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container my-5">
+    
+    <!-- Why Choose FarmConnect Section -->
+    <div class="row mb-5 py-5">
+        <div class="col-12 text-center mb-5">
+            <h2 class="display-5 fw-bold">Why Choose FarmConnect?</h2>
+            <p class="lead text-muted">Building stronger communities through local food networks</p>
+        </div>
+
+        <!-- Add this section to your home.html or product_list.html -->
+<!-- Place it after the "Why Choose FarmConnect" section -->
+
+{% if user.is_authenticated and user.user_type == 'buyer' and ai_recommendations %}
+<!-- AI Recommendations Section -->
+<div class="row mb-5 py-5 bg-light rounded-4">
+    <div class="col-12 text-center mb-4">
+        <div class="d-inline-block position-relative">
+            <h2 class="display-6 fw-bold mb-2">
+                <i class="fas fa-robot text-primary"></i> AI Recommendations For You
+            </h2>
+            <span class="badge bg-primary position-absolute top-0 start-100 translate-middle">
+                <i class="fas fa-sparkles"></i> AI Powered
+            </span>
+        </div>
+        <p class="lead text-muted">Personalized suggestions based on your preferences</p>
+    </div>
+    
+    <div class="row">
+        {% for rec in ai_recommendations %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm border-primary hover-lift">
+                <!-- AI Badge -->
+                <div class="position-absolute top-0 end-0 m-2">
+                    <span class="badge bg-primary">
+                        <i class="fas fa-robot"></i> AI Pick
+                    </span>
+                </div>
+                
+                {% if rec.product.image %}
+                <img src="{{ rec.product.image.url }}" class="card-img-top" alt="{{ rec.product.name }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-gradient" style="height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">{{ rec.product.name }}</h5>
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-store"></i> {{ rec.product.farmer.farm_name }}
+                    </p>
+                    
+                    <!-- AI Reason Badge -->
+                    <div class="mb-2">
+                        <span class="badge bg-info text-white">
+                            <i class="fas fa-lightbulb"></i> {{ rec.reason }}
+                        </span>
+                    </div>
+                    
+                    {% if rec.product.is_organic %}
+                    <span class="badge bg-success mb-2">
+                        <i class="fas fa-leaf"></i> Organic
+                    </span>
+                    {% endif %}
+                    
+                    <p class="card-text">{{ rec.product.description|truncatewords:12 }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <h4 class="text-success mb-0">{{ rec.product.price|rupees }}/{{ rec.product.unit }}</h4>
+                        <div class="text-warning">
+                            {% if rec.product.farmer.average_rating > 0 %}
+                            <i class="fas fa-star"></i> {{ rec.product.farmer.average_rating|floatformat:1 }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="{% url 'products:product_detail' rec.product.pk %}" class="btn btn-primary w-100">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- AI Stats -->
+    <div class="col-12 text-center mt-4">
+        <div class="alert alert-primary d-inline-block">
+            <i class="fas fa-chart-line"></i> 
+            Our AI analyzed <strong>{{ ai_recommendations|length }}</strong> personalized recommendations for you based on your order history and preferences
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-lift {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .hover-lift:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
+    }
+    
+    .ai-pulse {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+</style>
+{% endif %}
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card feature-card shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-handshake fa-2x"></i>
+                    </div>
+                    <h4 class="card-title fw-bold mb-3">Direct Connection</h4>
+                    <p class="card-text text-muted">
+                        Buy directly from farmers, eliminating middlemen and ensuring fair prices for everyone.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card feature-card shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-leaf fa-2x"></i>
+                    </div>
+                    <h4 class="card-title fw-bold mb-3">Fresh & Local</h4>
+                    <p class="card-text text-muted">
+                        Get the freshest produce from farms in your local area, harvested at peak ripeness.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card feature-card shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-comments fa-2x"></i>
+                    </div>
+                    <h4 class="card-title fw-bold mb-3">Direct Communication</h4>
+                    <p class="card-text text-muted">
+                        Message farmers directly to discuss your needs, preferences, and special requests.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card feature-card shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-map-marked-alt fa-2x"></i>
+                    </div>
+                    <h4 class="card-title fw-bold mb-3">Interactive Maps</h4>
+                    <p class="card-text text-muted">
+                        Discover nearby farms with interactive maps showing locations and delivery zones.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card feature-card shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-star fa-2x"></i>
+                    </div>
+                    <h4 class="card-title fw-bold mb-3">Trust & Reviews</h4>
+                    <p class="card-text text-muted">
+                        Build trust through our comprehensive review and rating system from real buyers.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card feature-card shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                    <h4 class="card-title fw-bold mb-3">Smart Analytics</h4>
+                    <p class="card-text text-muted">
+                        Farmers get powerful analytics and inventory management tools to grow their business.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="row bg-light rounded-4 p-5 mb-5">
+        <div class="col-12 text-center mb-5">
+            <h2 class="display-5 fw-bold">How It Works</h2>
+            <p class="lead text-muted">Simple, transparent, and effective</p>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card border-success shadow-sm h-100">
+                <div class="card-header bg-success text-white py-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-tractor me-2"></i> For Farmers
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <ol class="list-group list-group-numbered list-group-flush">
+                        <li class="list-group-item">Create your farmer profile</li>
+                        <li class="list-group-item">Add your products with photos and prices</li>
+                        <li class="list-group-item">Manage inventory and availability</li>
+                        <li class="list-group-item">Receive and fulfill orders</li>
+                        <li class="list-group-item">Build trust through customer reviews</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card border-primary shadow-sm h-100">
+                <div class="card-header bg-primary text-white py-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shopping-cart me-2"></i> For Buyers
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <ol class="list-group list-group-numbered list-group-flush">
+                        <li class="list-group-item">Browse local farms and products</li>
+                        <li class="list-group-item">Search by location and preferences</li>
+                        <li class="list-group-item">Place orders directly with farmers</li>
+                        <li class="list-group-item">Choose pickup or delivery</li>
+                        <li class="list-group-item">Leave reviews and build relationships</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row text-center mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                <div class="card-body p-5 text-white">
+                    <h2 class="display-5 fw-bold mb-3">Ready to Get Started?</h2>
+                    <p class="lead mb-4">
+                        Join thousands of farmers and buyers building a better food system
+                    </p>
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg px-5 py-3 shadow">
+                            <i class="fas fa-user-plus"></i> Create Free Account
+                        </a>
+                        <a href="{% url 'products:product_list' %}" class="btn btn-outline-light btn-lg px-5 py-3 shadow">
+                            <i class="fas fa-search"></i> Explore Products
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+    
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // Image Slider Logic
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slider-image');
+        const totalSlides = slides.length;
+        let autoSlideInterval;
+        
+        console.log('Total slides found:', totalSlides);
+        
+        // Create navigation dots
+        const dotsContainer = document.getElementById('sliderDots');
+        if (dotsContainer) {
+            dotsContainer.innerHTML = ''; // Clear existing dots
+            for(let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'slider-dot' + (i === 0 ? ' active' : '');
+                dot.onclick = function() { goToSlide(i); };
+                dotsContainer.appendChild(dot);
+            }
+        }
+        
+        const dots = document.querySelectorAll('.slider-dot');
+        
+        // Change slide function
+        function changeSlide(direction) {
+            slides[currentSlide].classList.remove('active');
+            dots[currentSlide].classList.remove('active');
+            
+            currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+            
+            slides[currentSlide].classList.add('active');
+            dots[currentSlide].classList.add('active');
+            
+            console.log('Changed to slide:', currentSlide);
+        }
+        
+        // Go to specific slide
+        function goToSlide(index) {
+            slides[currentSlide].classList.remove('active');
+            dots[currentSlide].classList.remove('active');
+            
+            currentSlide = index;
+            
+            slides[currentSlide].classList.add('active');
+            dots[currentSlide].classList.add('active');
+            
+            resetAutoSlide();
+        }
+        
+        // Auto slide - FAST (2.5 seconds)
+        function startAutoSlide() {
+            autoSlideInterval = setInterval(function() {
+                changeSlide(1);
+            }, 2500); // Change every 2.5 seconds - FAST!
+            console.log('Auto-slide started');
+        }
+        
+        function resetAutoSlide() {
+            clearInterval(autoSlideInterval);
+            startAutoSlide();
+        }
+        
+        // Start auto sliding immediately
+        startAutoSlide();
+        
+        // Button event listeners
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        if (prevBtn) {
+            prevBtn.onclick = function() {
+                changeSlide(-1);
+                resetAutoSlide();
+            };
+        }
+        
+        if (nextBtn) {
+            nextBtn.onclick = function() {
+                changeSlide(1);
+                resetAutoSlide();
+            };
+        }
+        
+        // Pause on hover
+        const heroSlider = document.getElementById('heroSlider');
+        if (heroSlider) {
+            heroSlider.addEventListener('mouseenter', function() {
+                clearInterval(autoSlideInterval);
+                console.log('Auto-slide paused');
+            });
+            
+            heroSlider.addEventListener('mouseleave', function() {
+                startAutoSlide();
+                console.log('Auto-slide resumed');
+            });
+        }
+        
+        // Animated Counter Function
+        function animateCounter(element, target, duration) {
+            let start = 0;
+            const increment = target / (duration / 16);
+            
+            const timer = setInterval(function() {
+                start += increment;
+                if(start >= target) {
+                    element.textContent = target.toLocaleString();
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(start).toLocaleString();
+                }
+            }, 16);
+        }
+        
+        // Trigger counter animation when stats section is visible
+        const observerOptions = {
+            threshold: 0.5
+        };
+        
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if(entry.isIntersecting) {
+                    const counters = document.querySelectorAll('.counter');
+                    counters.forEach(function(counter) {
+                        const target = parseInt(counter.dataset.target);
+                        animateCounter(counter, target, 2000);
+                    });
+                    observer.disconnect();
+                }
+            });
+        }, observerOptions);
+        
+        const statsSection = document.querySelector('.stats-section');
+        if(statsSection) {
+            observer.observe(statsSection);
+        }
+        
+        // Smooth scroll for scroll indicator
+        const scrollIndicator = document.querySelector('.scroll-indicator');
+        if(scrollIndicator) {
+            scrollIndicator.addEventListener('click', function() {
+                const statsSection = document.querySelector('.stats-section');
+                if(statsSection) {
+                    statsSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if(e.key === 'ArrowLeft') {
+                changeSlide(-1);
+                resetAutoSlide();
+            } else if(e.key === 'ArrowRight') {
+                changeSlide(1);
+                resetAutoSlide();
+            }
+        });
+        
+        console.log('FarmConnect slider initialized successfully!');
+    });
+})();
+</script>
+{% endblock %}

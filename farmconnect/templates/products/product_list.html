@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+{% block title %}Products - FarmConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold"><i class="fas fa-shopping-basket"></i> Browse Products</h2>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            {{ form.query }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.category }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.min_price }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.max_price }}
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                {{ form.is_organic }}
+                                <label class="form-check-label" for="{{ form.is_organic.id_for_label }}">
+                                    Organic Only
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Recommendations Section -->
+{% if user.is_authenticated and user.user_type == 'buyer' and ai_recommendations %}
+<div class="row mb-5 py-4 bg-gradient rounded-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="col-12 text-center mb-4">
+        <h2 class="display-6 fw-bold text-white mb-2">
+            <i class="fas fa-robot"></i> AI Recommendations For You
+        </h2>
+        <span class="badge bg-warning text-dark fs-6">
+            <i class="fas fa-sparkles"></i> Powered by Artificial Intelligence
+        </span>
+    </div>
+    
+    <div class="row px-3">
+        {% for rec in ai_recommendations %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-lg border-0" style="transform: translateY(0); transition: transform 0.3s;">
+                <!-- AI Badge -->
+                <div class="position-absolute top-0 end-0 m-2" style="z-index: 10;">
+                    <span class="badge bg-primary">
+                        <i class="fas fa-robot"></i> AI Pick
+                    </span>
+                </div>
+                
+                {% if rec.product.image %}
+                <img src="{{ rec.product.image.url }}" class="card-img-top" alt="{{ rec.product.name }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top" style="height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">{{ rec.product.name }}</h5>
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-store"></i> {{ rec.product.farmer.farm_name }}
+                    </p>
+                    
+                    <!-- AI Reason -->
+                    <div class="alert alert-info mb-2 py-1 px-2 small">
+                        <i class="fas fa-lightbulb"></i> <strong>{{ rec.reason }}</strong>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="text-success mb-0">{{ rec.product.price|rupees }}/{{ rec.product.unit }}</h4>
+                        {% if rec.product.is_organic %}
+                        <span class="badge bg-success">Organic</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'products:product_detail' rec.product.pk %}" class="btn btn-primary w-100">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="col-12 text-center mt-3">
+        <p class="text-white mb-0">
+            <i class="fas fa-chart-line"></i> 
+            <strong>{{ ai_recommendations|length }}</strong> personalized recommendations generated by our AI engine
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Divider -->
+<hr class="my-5">
+
+    <!-- Products Grid -->
+    <div class="row">
+        {% if products %}
+        {% for product in products %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm hover-card">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <img src="https://via.placeholder.com/400x200?text={{ product.name }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <p class="text-muted small">
+                        <i class="fas fa-store"></i> {{ product.farmer.farm_name }}
+                    </p>
+                    {% if product.category %}
+                    <span class="badge bg-secondary mb-2">{{ product.category.name }}</span>
+                    {% endif %}
+                    {% if product.is_organic %}
+                    <span class="badge bg-success mb-2">Organic</span>
+                    {% endif %}
+                    <p class="card-text">{{ product.description|truncatewords:15 }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="text-success mb-0">{{ product.price|rupees }}/{{ product.unit }}</h4>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'products:product_detail' product.pk %}" class="btn btn-outline-success">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle"></i> No products found matching your criteria.
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

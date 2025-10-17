@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+{% block title %}{{ product.name }} - FarmConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'products:product_list' %}">Products</a></li>
+            <li class="breadcrumb-item active">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded shadow">
+            {% else %}
+            <img src="https://via.placeholder.com/600x400?text={{ product.name }}" alt="{{ product.name }}" class="img-fluid rounded shadow">
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <h1 class="fw-bold">{{ product.name }}</h1>
+            {% if product.category %}
+            <p class="text-muted">
+                <i class="fas fa-tag"></i> {{ product.category.name }}
+            </p>
+            {% endif %}
+            
+            <div class="mb-3">
+                {% if product.is_organic %}
+                <span class="badge bg-success fs-6"><i class="fas fa-leaf"></i> Organic</span>
+                {% endif %}
+                {% if product.is_available %}
+                <span class="badge bg-success fs-6"><i class="fas fa-check-circle"></i> Available</span>
+                {% else %}
+                <span class="badge bg-danger fs-6"><i class="fas fa-times-circle"></i> Out of Stock</span>
+                {% endif %}
+            </div>
+            
+            <h2 class="text-success mb-3">{{ product.price|rupees }} <small class="text-muted">/ {{ product.unit }}</small></h2>
+            
+            <p class="lead">{{ product.description }}</p>
+            
+            {% if inventory %}
+            <div class="alert alert-info">
+                <i class="fas fa-box"></i> <strong>Available Quantity:</strong> {{ inventory.available_quantity }} {{ product.unit }}
+                {% if inventory.is_low_stock %}
+                <span class="badge bg-warning text-dark">Low Stock</span>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            {% if product.harvest_date %}
+            <p><strong><i class="fas fa-calendar"></i> Harvest Date:</strong> {{ product.harvest_date|date:"M d, Y" }}</p>
+            {% endif %}
+            
+            <hr>
+            
+            <h5 class="fw-bold">From:</h5>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <a href="{% url 'accounts:farmer_profile' product.farmer.pk %}">
+                            {{ product.farmer.farm_name }}
+                        </a>
+                    </h6>
+                    <p class="card-text text-muted">
+                        <i class="fas fa-map-marker-alt"></i> {{ product.farmer.city }}, {{ product.farmer.state }}
+                    </p>
+                    {% if product.farmer.average_rating > 0 %}
+                    <p class="card-text">
+                        <span class="text-warning">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= product.farmer.average_rating %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                        ({{ product.farmer.total_reviews }} reviews)
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if user.is_authenticated and user.user_type == 'buyer' and product.is_available %}
+            <div class="d-grid gap-2">
+                <a href="{% url 'orders:create_order' product.pk %}" class="btn btn-success btn-lg">
+                    <i class="fas fa-shopping-cart"></i> Place Order
+                </a>
+                <a href="{% url 'orders:send_message_to' product.farmer.user.id %}" class="btn btn-outline-primary">
+                    <i class="fas fa-envelope"></i> Contact Farmer
+                </a>
+            </div>
+            {% elif not user.is_authenticated %}
+            <div class="alert alert-warning">
+                <i class="fas fa-info-circle"></i> Please <a href="{% url 'accounts:login' %}">login</a> to place an order.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

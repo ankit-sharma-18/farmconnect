@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Messages - FarmConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2 class="fw-bold"><i class="fas fa-envelope"></i> Messages</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{% url 'orders:send_message' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> New Message
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-inbox"></i> Received Messages</h5>
+                </div>
+                <div class="card-body">
+                    {% if received_messages %}
+                    <div class="list-group list-group-flush">
+                        {% for message in received_messages %}
+                        <div class="list-group-item {% if not message.is_read %}bg-light{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">
+                                        {% if not message.is_read %}<i class="fas fa-circle text-primary" style="font-size: 0.5rem;"></i>{% endif %}
+                                        {{ message.subject }}
+                                    </h6>
+                                    <p class="mb-1 text-muted small">From: {{ message.sender.username }}</p>
+                                    <p class="mb-1">{{ message.content|truncatewords:20 }}</p>
+                                    <small class="text-muted">{{ message.created_at|date:"M d, Y - h:i A" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">No received messages</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-paper-plane"></i> Sent Messages</h5>
+                </div>
+                <div class="card-body">
+                    {% if sent_messages %}
+                    <div class="list-group list-group-flush">
+                        {% for message in sent_messages %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ message.subject }}</h6>
+                                    <p class="mb-1 text-muted small">To: {{ message.recipient.username }}</p>
+                                    <p class="mb-1">{{ message.content|truncatewords:20 }}</p>
+                                    <small class="text-muted">{{ message.created_at|date:"M d, Y - h:i A" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">No sent messages</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ buyer.user.username }} - FarmConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-user"></i> Buyer Profile</h3>
+                </div>
+                <div class="card-body">
+                    <h4>{{ buyer.user.username }}</h4>
+                    <p><strong>Type:</strong> {{ buyer.get_buyer_type_display }}</p>
+                    {% if buyer.business_name %}
+                    <p><strong>Business:</strong> {{ buyer.business_name }}</p>
+                    {% endif %}
+                    <p><strong>Location:</strong> {{ buyer.city }}, {{ buyer.state }}</p>
+                    {% if buyer.preferred_delivery_time %}
+                    <p><strong>Preferred Delivery Time:</strong> {{ buyer.preferred_delivery_time }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

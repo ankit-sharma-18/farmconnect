@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Order #{{ order.id }} - FarmConnect{% endblock %}
+{% load currency_tags %}
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'orders:order_list' %}">Orders</a></li>
+            <li class="breadcrumb-item active">Order #{{ order.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold">
+                Order #{{ order.id }}
+                <span class="badge bg-{% if order.status == 'completed' %}success{% elif order.status == 'cancelled' %}danger{% elif order.status == 'pending' %}warning{% else %}info{% endif %} float-end">
+                    {{ order.get_status_display }}
+                </span>
+            </h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-shopping-bag"></i> Order Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            {% if order.product.image %}
+                            <img src="{{ order.product.image.url }}" alt="{{ order.product.name }}" class="img-fluid rounded">
+                            {% else %}
+                            <img src="https://via.placeholder.com/300x200?text={{ order.product.name }}" alt="{{ order.product.name }}" class="img-fluid rounded">
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <h4>{{ order.product.name }}</h4>
+                            <p class="text-muted">From: <a href="{% url 'accounts:farmer_profile' order.product.farmer.pk %}">{{ order.product.farmer.farm_name }}</a></p>
+                            
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Quantity:</th>
+                                    <td>{{ order.quantity }} {{ order.product.unit }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Unit Price:</th>
+                                    <td>{{ order.unit_price|rupees }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Total Price:</th>
+                                    <td class="text-success"><strong>{{ order.total_price|rupees }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th>Delivery Method:</th>
+                                    <td>{{ order.get_delivery_method_display }}</td>
+                                </tr>
+                                {% if order.delivery_date %}
+                                <tr>
+                                    <th>Delivery Date:</th>
+                                    <td>{{ order.delivery_date|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                            
+                            {% if order.notes %}
+                            <div class="alert alert-info">
+                                <strong>Notes:</strong> {{ order.notes }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if order.delivery_method == 'delivery' and order.delivery_address %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> Delivery Address</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ order.delivery_address }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Order Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Order Date:</strong><br>{{ order.created_at|date:"M d, Y - h:i A" }}</p>
+                    <p><strong>Last Updated:</strong><br>{{ order.updated_at|date:"M d, Y - h:i A" }}</p>
+                    <p><strong>Buyer:</strong><br>{{ order.buyer.username }}</p>
+                </div>
+            </div>
+
+            {% if user == order.product.farmer.user %}
+            <!-- Farmer Actions -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-tasks"></i> Update Status</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.status }}
+                        <button type="submit" class="btn btn-success w-100 mt-2">
+                            <i class="fas fa-save"></i> Update Status
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% elif user == order.buyer %}
+            <!-- Buyer Actions -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-tools"></i> Actions</h5>
+                </div>
+                <div class="card-body">
+                    {% if order.status in 'pending,confirmed' %}
+                    <a href="{% url 'orders:cancel_order' order.pk %}" class="btn btn-danger w-100 mb-2">
+                        <i class="fas fa-times"></i> Cancel Order
+                    </a>
+                    {% endif %}
+                    
+                    {% if order.status == 'completed' and not order.review %}
+                    <a href="{% url 'reviews:create_review' order.pk %}" class="btn btn-primary w-100">
+                        <i class="fas fa-star"></i> Write Review
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-envelope"></i> Communication</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'orders:send_message_order' order.pk %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-comment"></i> Send Message
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

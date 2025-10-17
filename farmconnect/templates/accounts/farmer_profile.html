@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ farmer.farm_name }} - FarmConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-4">
+            {% if farmer.farm_image %}
+            <img src="{{ farmer.farm_image.url }}" alt="{{ farmer.farm_name }}" class="img-fluid rounded shadow">
+            {% else %}
+            <img src="https://via.placeholder.com/400x300?text=Farm+Image" alt="{{ farmer.farm_name }}" class="img-fluid rounded shadow">
+            {% endif %}
+        </div>
+        <div class="col-md-8">
+            <h1 class="fw-bold">{{ farmer.farm_name }}</h1>
+            <p class="text-muted">
+                <i class="fas fa-map-marker-alt"></i> {{ farmer.city }}, {{ farmer.state }}
+            </p>
+            
+            <div class="mb-3">
+                {% if farmer.average_rating > 0 %}
+                <span class="text-warning fs-5">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= farmer.average_rating %}
+                            <i class="fas fa-star"></i>
+                        {% else %}
+                            <i class="far fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </span>
+                <span class="text-muted">({{ farmer.average_rating }}/5 - {{ farmer.total_reviews }} reviews)</span>
+                {% else %}
+                <span class="text-muted">No reviews yet</span>
+                {% endif %}
+            </div>
+            
+            {% if farmer.certification %}
+            <p><span class="badge bg-success"><i class="fas fa-certificate"></i> {{ farmer.certification }}</span></p>
+            {% endif %}
+            
+            <p class="lead">{{ farmer.description }}</p>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong><i class="fas fa-truck"></i> Delivery Radius:</strong> {{ farmer.delivery_radius }} km</p>
+                </div>
+                {% if farmer.established_year %}
+                <div class="col-md-6">
+                    <p><strong><i class="fas fa-calendar"></i> Established:</strong> {{ farmer.established_year }}</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if user.is_authenticated and user.user_type == 'buyer' %}
+            <div class="d-flex gap-2">
+                <a href="{% url 'orders:send_message_to' farmer.user.id %}" class="btn btn-primary">
+                    <i class="fas fa-envelope"></i> Contact Farmer
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Map Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-map"></i> Farm Location & Delivery Zone</h5>
+                </div>
+                <div class="card-body">
+                    <div id="map" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="fw-bold mb-3"><i class="fas fa-shopping-basket"></i> Available Products</h3>
+        </div>
+        {% if products %}
+        {% for product in products %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <img src="https://via.placeholder.com/400x200?text={{ product.name }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    {% if product.category %}
+                    <p class="text-muted small"><i class="fas fa-tag"></i> {{ product.category.name }}</p>
+                    {% endif %}
+                    <p class="card-text">{{ product.description|truncatewords:15 }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="text-success mb-0">${{ product.price }}/{{ product.unit }}</h4>
+                        {% if product.is_organic %}
+                        <span class="badge bg-success">Organic</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'products:product_detail' product.pk %}" class="btn btn-outline-success w-100">
+                        View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <p class="text-muted text-center">No products available at the moment.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="fw-bold mb-3"><i class="fas fa-star"></i> Reviews</h3>
+            <a href="{% url 'reviews:farmer_reviews' farmer.pk %}" class="btn btn-outline-primary mb-3">
+                View All Reviews
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var mapDiv = document.getElementById('map');
+        
+        {% if farmer.latitude and farmer.longitude %}
+            try {
+                // Get coordinates from Django template
+                var lat = parseFloat('{{ farmer.latitude }}');
+                var lng = parseFloat('{{ farmer.longitude }}');
+                
+                // Validate coordinates
+                if (isNaN(lat) || isNaN(lng)) {
+                    throw new Error('Invalid coordinates');
+                }
+                
+                // Initialize the map
+                var map = L.map('map').setView([lat, lng], 13);
+                
+                // Add tile layer
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(map);
+                
+                // Add marker for farm location
+                var marker = L.marker([lat, lng]).addTo(map);
+                var popupContent = '<b>{{ farmer.farm_name|escapejs }}</b><br>{{ farmer.address|escapejs }}';
+                marker.bindPopup(popupContent).openPopup();
+                
+                // Add delivery radius circle if available
+                {% if farmer.delivery_radius %}
+                    var deliveryRadius = parseFloat('{{ farmer.delivery_radius }}');
+                    if (!isNaN(deliveryRadius) && deliveryRadius > 0) {
+                        var radiusInMeters = deliveryRadius * 1000; // Convert km to meters
+                        var circle = L.circle([lat, lng], {
+                            color: 'green',
+                            fillColor: '#28a745',
+                            fillOpacity: 0.1,
+                            radius: radiusInMeters
+                        }).addTo(map);
+                        
+                        circle.bindPopup('Delivery Zone: ' + deliveryRadius + ' km radius');
+                    }
+                {% endif %}
+                
+            } catch (error) {
+                console.error('Map initialization error:', error);
+                mapDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Unable to load map. Please check coordinates.</div>';
+            }
+        {% else %}
+            // Show message if coordinates not available
+            mapDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> Location coordinates have not been set by the farmer yet.</div>';
+        {% endif %}
+    });
+</script>
+{% endblock %}

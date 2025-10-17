@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Orders - FarmConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2 class="fw-bold"><i class="fas fa-clipboard-list"></i> Orders</h2>
+        </div>
+        <div class="col-md-6">
+            <div class="btn-group float-end" role="group">
+                <a href="?status=" class="btn btn-outline-primary {% if not status_filter %}active{% endif %}">All</a>
+                <a href="?status=pending" class="btn btn-outline-warning {% if status_filter == 'pending' %}active{% endif %}">Pending</a>
+                <a href="?status=confirmed" class="btn btn-outline-info {% if status_filter == 'confirmed' %}active{% endif %}">Confirmed</a>
+                <a href="?status=completed" class="btn btn-outline-success {% if status_filter == 'completed' %}active{% endif %}">Completed</a>
+                <a href="?status=cancelled" class="btn btn-outline-danger {% if status_filter == 'cancelled' %}active{% endif %}">Cancelled</a>
+            </div>
+        </div>
+    </div>
+
+    {% if orders %}
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-success">
+                        <tr>
+                            <th>Order #</th>
+                            {% if user.user_type == 'farmer' %}
+                            <th>Buyer</th>
+                            {% else %}
+                            <th>Farmer</th>
+                            {% endif %}
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td><strong>#{{ order.id }}</strong></td>
+                            {% if user.user_type == 'farmer' %}
+                            <td>{{ order.buyer.username }}</td>
+                            {% else %}
+                            <td>{{ order.product.farmer.farm_name }}</td>
+                            {% endif %}
+                            <td>{{ order.product.name }}</td>
+                            <td>{{ order.quantity }} {{ order.product.unit }}</td>
+                            <td class="text-success"><strong>${{ order.total_price }}</strong></td>
+                            <td>
+                                <span class="badge bg-{% if order.status == 'completed' %}success{% elif order.status == 'cancelled' %}danger{% elif order.status == 'pending' %}warning{% else %}info{% endif %}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ order.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="fas fa-inbox fa-3x mb-3"></i>
+        <h4>No Orders Yet</h4>
+        {% if user.user_type == 'buyer' %}
+        <p>Start browsing products to place your first order.</p>
+        <a href="{% url 'products:product_list' %}" class="btn btn-success">
+            <i class="fas fa-shopping-basket"></i> Browse Products
+        </a>
+        {% else %}
+        <p>Orders from buyers will appear here.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
